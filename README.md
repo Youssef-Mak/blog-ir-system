@@ -5,7 +5,7 @@ Information Retrieval (IR) system based for a collection of documents (Twitter m
 ## How to use
 Install the requirements 
 ```
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 Now, open python interpreter
 ```
