@@ -1,4 +1,17 @@
 import nltk
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+try:
+    nltk.data.find('tokenizers/stopwords')
+except LookupError:
+    nltk.download('stopwords')
+try:
+    nltk.data.find('tokenizers/wordnet')
+except LookupError:
+    nltk.download('wordnet')
+
 import pandas as pd
 
 from nltk.stem import PorterStemmer, WordNetLemmatizer
