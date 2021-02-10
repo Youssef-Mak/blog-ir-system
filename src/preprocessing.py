@@ -18,7 +18,7 @@ def identify_tokens(row):
     message = row['raw_message']
     tokens = nltk.word_tokenize(message)
     # taken only words (not punctuation)
-    token_words = [w for w in tokens if w.isalnum()]
+    token_words = [w for w in tokens if w.isalpha()]
     return token_words
 
 def lemmatize_list(row):
@@ -28,7 +28,7 @@ def lemmatize_list(row):
 
 def remove_stops(row):
     my_list = row['lemmatized_items']
-    meaningful_items = [w for w in my_list if not w in stop_words]
+    meaningful_items = [w for w in my_list if w not in stop_words]
     return (meaningful_items)
 
 def rejoin_words(row):
