@@ -32,3 +32,9 @@ To run default batch defined in `data/topics_MB1-49.txt` and produce `results.tx
 ```
 python src/query.py 
 ```
+
+## Trec Results
+```
+map                     all     0.2075
+P_10                    all     0.2408
+```
