@@ -1,7 +1,11 @@
+import re
+import os
+import csv
 import sys
 import nltk
 import math
 import operator
+import datetime
 import pandas as pd
 from invertedindex import InvertedIndex
 
@@ -10,6 +14,8 @@ lemmatizer = WordNetLemmatizer()
 
 from nltk.corpus import stopwords
 stop_words = set(stopwords.words("english"))
+
+QUERY_FILE = os.path.join(os.path.dirname(__file__), "../data/topics_MB1-49.txt")
 
 
 class Query:
@@ -85,26 +91,46 @@ class Query:
     """
     Perfoms query to fetch most similar results
     """
-    def perform_query(self):
+    def perform_query(self, top=1000):
         results = dict()
         for id, vect in self.doc_index.index.items():
             results[id] = self.get_similarity(vect)
         sorted_tuples = sorted(results.items(), key=operator.itemgetter(1), reverse=True)
         sorted_results = {k: v for k, v in sorted_tuples}
-        return sorted_results
+        top_results = {k: sorted_results[k] for k in list(sorted_results)[:top]}
+        return top_results
 
 
 if __name__ == "__main__":
-    raw_query = sys.argv[1]
-    query = Query(raw_query)
-    query.process_raw_query()
-    results = query.perform_query()
-    top_ten = {k: results[k] for k in list(results)[:10]}
-    print("\nTOP TEN RESULTS\n")
-    for id, sim in top_ten.items():
-        print("ID: " + str(id))
-        print("\n")
-        print("Raw Message: " + str(query.doc_index.raw_db[id]))
-        print("\n")
-        print("Similarity: " + str(sim))
-        print("\n\n")
+    if len(sys.argv) == 1:
+        # Read Query file
+        raw_queries = open(QUERY_FILE).read()
+        num_pattern = re.compile("<num> Number: MB(\d{3}) </num>")
+        query_pattern = re.compile("<title> (.*) </title>")
+        numbers = re.findall(num_pattern, raw_queries)
+        queries = re.findall(query_pattern, raw_queries)
+        curr_run = datetime.datetime.now().strftime("%d/%m/%Y:%H:%M:%S")
+        with open('Results.txt', 'w', newline='') as file:
+            print(" ".join(["topic_id", "Q0", "docno", "rank", "score", "tag"]), file=file)
+            for i in range(len(numbers)):
+                raw_query = queries[i]
+                query = Query(raw_query)
+                query.process_raw_query()
+                results = query.perform_query()
+                rank = 1;
+                for id, sim in results.items():
+                    print(" ".join([str(i + 1), "Q0", str(id), str(rank), str(sim), curr_run]), file=file)
+                    rank = rank + 1
+    else:
+        raw_query = sys.argv[1]
+        query = Query(raw_query)
+        query.process_raw_query()
+        results = query.perform_query(top=10)
+        print("\nTOP TEN RESULTS\n")
+        for id, sim in results.items():
+            print("ID: " + str(id))
+            print("\n")
+            print("Raw Message: " + str(query.doc_index.raw_db[id]))
+            print("\n")
+            print("Similarity: " + str(sim))
+            print("\n\n")

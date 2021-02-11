@@ -22,12 +22,13 @@ python src/invertedindex.py
 ## Running a Query 
 
 ### Individual Query
+To run specified query in command and output results in console:
 ```
 python src/query.py "<query>"
 ```
 
 ### Batch Query
-Default batch defined in `data/topics_MB1-49.txt`
+To run default batch defined in `data/topics_MB1-49.txt` and produce `results.txt`:
 ```
 python src/query.py 
 ```
