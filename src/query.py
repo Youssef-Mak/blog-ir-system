@@ -70,7 +70,6 @@ class Query:
         for term in self.weights:
             # tfi * idfi
             tf = self.weights[term] / max_freq
-            # idf = math.log(doc_size / self.doc_index.total_freq[term])
             idf = 0 if term not in self.doc_index.total_freq else math.log(doc_size / self.doc_index.total_freq[term])
             self.weights[term] = (0.5 + (0.5 * tf)) * idf
 
@@ -117,7 +116,7 @@ if __name__ == "__main__":
                 query = Query(raw_query)
                 query.process_raw_query()
                 results = query.perform_query()
-                rank = 1;
+                rank = 1
                 for id, sim in results.items():
                     print(" ".join([str(i + 1), "Q0", str(id), str(rank), str(sim), curr_run]), file=file)
                     rank = rank + 1

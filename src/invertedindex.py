@@ -64,6 +64,9 @@ class InvertedIndex:
                 document_freq[term] = tf * idf
 
 
+"""
+Produce Inverted Index and Serialize 
+"""
 if __name__ == "__main__":
     inverted_index = InvertedIndex()
     inverted_index.parse_csv()
