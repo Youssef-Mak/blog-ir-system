@@ -73,7 +73,7 @@ The main component of the IR system is handled in the query stage. In its basic 
 >idf_i = inverse document frequency of term i, = log2(total number of documents/ df_i)
 >
 >----------------------------------------------------------------------------------------------
->| wiq = (0.5 + 0.5 tf_iq) ∙ idf_i = (0.5 + 0.5 tf_iq) ∙ log2(total number of documents/ df_i)|
+>| w_iq = (0.5 + 0.5 tf_iq) ∙ idf_i = (0.5 + 0.5 tf_iq) ∙ log2(total number of documents/ df_i)|
 >----------------------------------------------------------------------------------------------
 > FIGURE 2. Query TF * IDF Equations & Calculation
 
