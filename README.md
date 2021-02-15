@@ -46,25 +46,36 @@ The IR system first parses the Trec_microblog11.txt, extracting the tweet-id and
 
 During the construction of the inverted index, we first parse the trec_mb_processed.csv file to retrieve the id, processed message and raw message. We then create two python dictionaries to store the processed data in one and the raw data in the other with their corresponding id's. To construct the inverted index, we first go through each tweet in the processed data dictionary, extracting every term in the processed message into a list called term_list. In layman terms, the variable term_list contains all the processed terms/tokens per each tweet. Then for each term, we calculate and store its frequency within the tweet, in parallel we also calculate and store the total frequency of the term/token in the corpus. To calculate the weight(t_fi * idf_i) of each term occurring frequently in the tweet we used the following formula...
 
->$f_ij =$ frequency of term i in document j
->$tf_ij = fij / max_i {f_ij}$ (normalization across corpus)
->$df_i = $ number of documents containing term i
->$idf_i = $ inverse document frequency of term $i,= log2(total_number_of_documents/ dfi)$
->$w_ij = tf_ij ∙ idf_i = tf_ij ∙ log2($total number of documents$/ d_fi)$
+>f_ij = frequency of term i in document j
+>		
+>tf_ij = fij / max_i {f_ij} (normalization across corpus)
 >
->Figure 1. Document TF ∙ IDF Equations & Calculations
+>df_i = number of documents containing term i
+>		
+>idf_i = inverse document frequency of term i, = log2(total number of documents/ dfi) 
+>		
+>------------------------------------------------------------------------
+>| w_ij = tf_ij ∙ idf_i = tf_ij ∙ log2(total number of documents/ d_fi) |
+>------------------------------------------------------------------------
+> FIGURE 1. Document TF ∙ IDF Equations & Calculation
 
 Additionally, once the inverse index is successfully built it is also serialized locally using python's pickle library for non-repetitve, faster construction and retrieval.
 
 The main component of the IR system is handled in the query stage. In its basic form, the program accepts a string that is provided in the argument before code execution(eg. python query.py "enter any query"). Similarly to the inverted index, the query is then tokenized, lemmatized and stop-words are removed. Furthermore, the query term tf-idf weights are calculated and are stored in a dictionary(key=term, value= $(0.5 + 0.5∙tf_iq) ∙ idf_i)$ however, f_iq is calculated in respect to frequency of term i in query q rather then document. Therefore, to calculate the weifght of each term in respect to the query we utlilize a slightly different formula then the one used in Figure 1...
 
->$f_iq =$ frequency of term $i$ in query $q$
->$tf_iq = f_iq / max_i {f_iq}$ (normalization across corpus)
->$df_i =$ number of documents containing term $i$
->$idf_i =$ inverse document frequency of term $i$, $= log2($total number of documents$/ df_i)$
->$wiq = (0.5 + 0.5 tf_iq) ∙ idf_i = (0.5 + 0.5 tf_iq) ∙ log2($total number of documents$/ df_i)$ 
+
+>f_iq = frequency of term i in query q
 >
->Figure 2. Query TF ∙ IDF Equations & Calculation
+>tf_iq = f_iq / max_i {f_iq} (normalization across corpus)
+>
+>df_i = number of documents containing term i
+>
+>idf_i = inverse document frequency of term i, = log2(total number of documents/ df_i)
+>
+>----------------------------------------------------------------------------------------------
+>| wiq = (0.5 + 0.5 tf_iq) ∙ idf_i = (0.5 + 0.5 tf_iq) ∙ log2(total number of documents/ df_i)|
+>----------------------------------------------------------------------------------------------
+> FIGURE 2. Query TF * IDF Equations & Calculation
 
 In Figure 2, the tf_iq is multiplied and added by $1/2$ to provide a slightly better results for the query in comparison to using the formula in Figure 1. For the retrieval process we simply go through the index, calculate and store the cosine similarity between the tweet and query in a results dictionary. For the results process we sort the results dictionary by highest similarity results and return the specified amount(default=1000) results.
 
