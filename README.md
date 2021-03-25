@@ -1,10 +1,10 @@
 [![Run on Repl.it](https://repl.it/badge/github/Youssef-Mak/blog-ir-system)](https://repl.it/@YoussefMak1/blog-ir-system)
-# blog-ir-system
+# CSI4107 Assignment #1: Billal Zazai(8572975) & Youssef Makboul(8609614)
 
 Information Retrieval (IR) system based for a collection of documents (Twitter messages)
 
 ## Setup 
-Install the requirements 
+Install the requirements (NOTE: if this step doesn't work, simply install [anaconda](https://docs.anaconda.com/anaconda/install/))
 ```
 pip install -r requirements.txt
 ```
@@ -24,16 +24,16 @@ python src/invertedindex.py
 ### Individual Query
 To run specified query in command and output results in console:
 ```
-python src/query.py "<query>"
+python src/main.py -Q "<query>"
 ```
 
 ### Batch Query
-To run default batch defined in `data/topics_MB1-49.txt` and produce `results.txt`:
+To run default batch defined in `data/topics_MB1-49.txt` and produce `Results.txt`:
 ```
-python src/query.py 
+python src/main.py -F
 ```
 
-## Trec Results
+## TREC Results
 ```
 map                     all     0.2075
 P_10                    all     0.2408
