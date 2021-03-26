@@ -1,5 +1,5 @@
 [![Run on Repl.it](https://repl.it/badge/github/Youssef-Mak/blog-ir-system)](https://repl.it/@YoussefMak1/blog-ir-system)
-# CSI4107 Assignment #1: Billal Zazai(8572975) & Youssef Makboul(8609614)
+# Tweet Search Engine
 
 Information Retrieval (IR) system based for a collection of documents (Twitter messages)
 
