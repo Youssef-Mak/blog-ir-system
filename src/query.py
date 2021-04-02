@@ -1,4 +1,3 @@
-from nltk.corpus import stopwords
 import re
 import os
 import csv
@@ -7,75 +6,72 @@ import nltk
 import math
 import operator
 import datetime
+import pickle
 import pandas as pd
-from invertedindex import InvertedIndex
+from nltk.corpus import stopwords
+from inverted_index import InvertedIndex
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
+from utils.model_utils import get_inverted_index, get_bert_embeddings
 
 from nltk.stem import WordNetLemmatizer
 lemmatizer = WordNetLemmatizer()
 
 stop_words = set(stopwords.words("english"))
-
-QUERY_FILE = os.path.join(os.path.dirname(
-    __file__), "../data/topics_MB1-49.txt")
+sbert_model = SentenceTransformer('stsb-roberta-large')
 
 
 class Query:
+    """Class representing Query Object
 
-    @staticmethod
-    def get_doc_index():
-        inverted_index = InvertedIndex()
-        inverted_index.load_serialized()
-        return inverted_index
-
-    """
-    Query Class
+    Attributes:
+        query (str|[]): Query.
+        weights (dict): map containing td-idf weights for each term in query
+        doc_index (inverted_index): InvertedIndex corresponding to list of indexed documents
     """
 
     def __init__(self, raw_query):
+        """
+        Query Class
+        """
         self.query = raw_query
         self.weights = dict()
-        self.doc_index = InvertedIndex()
-        self.doc_index.load_serialized()
-
-    """
-    Process raw query(plain text) and scores it
-    """
+        self.doc_index = get_inverted_index()
 
     def process_raw_query(self):
+        """
+        Process raw query(plain text) and scores it
+        """
         self.identify_tokens()
         self.lemmatize_list()
         self.remove_stops()
         self.score()
 
-    """
-    Cleans string: lowercase and only alphabetic characters
-    """
-
     def identify_tokens(self):
+        """
+        Cleans string: lowercase and only alphabetic characters
+        """
         self.query = self.query.lower()
         tokens = nltk.word_tokenize(self.query)
         # taken only words (not punctuation)
         self.query = [w for w in tokens if w.isalpha()]
 
-    """
-    Applies Lematizer to query
-    """
-
     def lemmatize_list(self):
+        """
+        Applies Lematizer to query
+        """
         self.query = [lemmatizer.lemmatize(word) for word in self.query]
 
-    """
-    Removes stopwords from query
-    """
-
     def remove_stops(self):
+        """
+        Removes stopwords from query
+        """
         self.query = [w for w in self.query if w not in stop_words]
 
-    """
-    Scores query: Apply idf-tf to query to produce query vector
-    """
-
     def score(self):
+        """
+        Scores query: Apply idf-tf to query to produce query vector
+        """
         doc_size = len(self.doc_index.db.keys())
         for term in self.query:
             if term not in self.weights:
@@ -88,11 +84,10 @@ class Query:
                 doc_size / self.doc_index.total_freq[term])
             self.weights[term] = (0.5 + (0.5 * tf)) * idf
 
-    """
-    Computes Cosine Similarity between document vector and query vector(self)
-    """
-
     def get_similarity(self, document_weights):
+        """
+        Computes Cosine Similarity between query vector(self) and document vector
+        """
         numerator = 0
         wiq = 0
         wid = 0
@@ -104,14 +99,30 @@ class Query:
             wid = wid + math.pow(weight, 2)
         return numerator / math.sqrt(wiq*wid)
 
-    """
-    Perfoms query to fetch most similar results
-    """
+    def perform_query(self, method='default', top=1000):
+        """
+        Perfoms query to fetch most similar results
+        """
+        results = {}
+        if method == 'default':
+            results = dict()
+            for id, vect in self.doc_index.index.items():
+                results[id] = self.get_similarity(vect)
+        elif method == 'BERT':
+            ids = []
+            documents = []
+            for id, document in self.doc_index.db.items():
+                ids.append(id)
+                documents.append(document)
+            data = {'id': ids,
+                    'documents': documents}
+            df = pd.DataFrame.from_dict(data)
+            query_embeddings = sbert_model.encode(self.query)
+            document_embeddings = get_bert_embeddings()
+            pairwise_similarities = cosine_similarity(
+                query_embeddings, document_embeddings)[0]
+            results = dict(zip(df['id'], pairwise_similarities))
 
-    def perform_query(self, top=1000):
-        results = dict()
-        for id, vect in self.doc_index.index.items():
-            results[id] = self.get_similarity(vect)
         sorted_tuples = sorted(
             results.items(), key=operator.itemgetter(1), reverse=True)
         sorted_results = {k: v for k, v in sorted_tuples}
