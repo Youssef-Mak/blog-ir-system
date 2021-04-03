@@ -1,20 +1,13 @@
-import re
-import os
-import csv
-import sys
-import nltk
 import math
 import operator
-import datetime
-import pickle
-import pandas as pd
+import nltk
 from nltk.corpus import stopwords
-from inverted_index import InvertedIndex
-from fast_text_word_embedding import FastText
+from nltk.stem import WordNetLemmatizer
+import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from fast_text_word_embedding import FastText
 from utils.model_utils import get_inverted_index, get_bert_embeddings
-from nltk.stem import WordNetLemmatizer
 
 lemmatizer = WordNetLemmatizer()
 
@@ -56,7 +49,6 @@ class Query:
         """
         self.query = self.query.lower()
         tokens = nltk.word_tokenize(self.query)
-        # taken only words (not punctuation)
         self.query = [w for w in tokens if w.isalpha()]
 
     def lemmatize_list(self):
@@ -109,13 +101,11 @@ class Query:
         """
         for index_term, index_weight in document_weights.items():
             if index_term not in black_listed_terms:
-                #print (index_term, index_weight)
                 for query_term, _ in self.weights.copy().items():
-                    # calculate term similarity
                     try:
-                        similarityResult = int(fast_text_model.similarity_between(
+                        similarity_result = int(fast_text_model.similarity_between(
                             index_term, query_term) * 100.0)
-                        if (similarityResult > 65 and fast_text_model.is_a_synonym_of(index_term, query_term)):
+                        if (similarity_result > 65 and fast_text_model.is_a_synonym_of(index_term, query_term)):
                             self.weights[index_term] = index_weight
                         else:
                             black_listed_terms[index_term] = index_weight
@@ -130,21 +120,18 @@ class Query:
         """
         for index_term, index_weight in document_weights.items():
             if index_term not in black_listed_terms:
-                similarityCounter = 0
+                similarity_counter = 0
                 for query_term, _ in self.weights.copy().items():
-                    # calculate term similarity
                     try:
-                        similarityResult = int(fast_text_model.similarity_between(
+                        similarity_result = int(fast_text_model.similarity_between(
                             index_term, query_term) * 100.0)
-                        if (similarityResult > 65):
-                            similarityCounter += 1
+                        if similarity_result > 65:
+                            similarity_counter += 1
 
                     except KeyError:
                         black_listed_terms[index_term] = index_weight
-                # if index term has high similarity score with more then one term in query then expand query
-                if (similarityCounter > 1):
+                if similarity_counter > 1:
                     self.weights[index_term] = index_weight
-                # else blacklist it so we no longer calculate similarity
             else:
                 black_listed_terms[index_term] = index_weight
 
@@ -155,7 +142,6 @@ class Query:
         results = {}
         if method == 'default':
             results = dict()
-            # add the query terms to black_list so we dont calculate similarity on a words that already exists in query
             black_listed_terms = {**self.weights}
             for id, vect in self.doc_index.index.items():
                 results[id] = self.get_similarity(vect)
