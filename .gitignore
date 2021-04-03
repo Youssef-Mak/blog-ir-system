@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#pre-trained data text model
+data/wiki-news-300d-1M.vec
+data/vectors.vc
+data/vectors.vc.vectors.npy
+
 # C extensions
 *.so
 

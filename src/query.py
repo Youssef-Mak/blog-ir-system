@@ -10,16 +10,18 @@ import pickle
 import pandas as pd
 from nltk.corpus import stopwords
 from inverted_index import InvertedIndex
+from fast_text_word_embedding import FastText
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from utils.model_utils import get_inverted_index, get_bert_embeddings
-
 from nltk.stem import WordNetLemmatizer
+
 lemmatizer = WordNetLemmatizer()
 
 stop_words = set(stopwords.words("english"))
 sbert_model = SentenceTransformer('stsb-roberta-large')
 
+fast_text_model= FastText ()
 
 class Query:
     """Class representing Query Object
@@ -98,16 +100,66 @@ class Query:
         for term, weight in document_weights.items():
             wid = wid + math.pow(weight, 2)
         return numerator / math.sqrt(wiq*wid)
+    
+    def query_expansion_level_2 (self, document_weights, black_listed_terms):
+        '''
+        Performs a more leniante query expansion by calculating similarity AND if the index term is a synonym of the query term then it gets appended to the query terms. 
+        As a result this leads to expansion of the query
+        '''
+        for index_term, index_weight in document_weights.items ():
+            if index_term not in black_listed_terms:
+                #print (index_term, index_weight)
+                for query_term, _ in self.weights.copy().items ():
+                    #calculate term similarity
+                    try:
+                        similarityResult = int ( fast_text_model.similarity_between (index_term, query_term) * 100.0 )
+                        if (similarityResult >65 and fast_text_model.is_a_synonym_of (index_term, query_term) ):
+                            self.weights[index_term] = index_weight
+                        else:
+                            black_listed_terms[index_term] = index_weight
+                    except KeyError:
+                        black_listed_terms [index_term]=index_weight
+            
+    def query_expansion_level_1 (self, document_weights, black_listed_terms):
+        '''
+        Performs query expansion by calculating similarity between indexed terms and query terms. 
+        If more then 1 query term has a high similarity then it gets appended to the query terms. 
+        As a result this leads to expansion of the query
+        '''
+        for index_term, index_weight in document_weights.items ():
+            if index_term not in black_listed_terms:
+                similarityCounter = 0
+                for query_term, _ in self.weights.copy().items ():
+                    #calculate term similarity
+                    try:
+                        similarityResult = int ( fast_text_model.similarity_between (index_term, query_term) * 100.0 )
+                        if (similarityResult >65 ):
+                            similarityCounter +=1
+                        
+                        
+                    except KeyError:
+                        black_listed_terms [index_term]=index_weight
+                #if index term has high similarity score with more then one term in query then expand query
+                if ( similarityCounter >1 ):
+                    self.weights[index_term] = index_weight
+                #else blacklist it so we no longer calculate similarity
+                else:
+                    black_listed_terms[index_term] = index_weight
 
-    def perform_query(self, method='default', top=1000):
+    def perform_query(self, method='default', top=1000, query_expansion_lvl='none'):
         """
         Perfoms query to fetch most similar results
         """
         results = {}
         if method == 'default':
             results = dict()
+            black_listed_terms={**self.weights}#add the query terms to black_list so we dont calculate similarity on a words that already exists in query
             for id, vect in self.doc_index.index.items():
                 results[id] = self.get_similarity(vect)
+                if query_expansion_lvl=='level-1':
+                    self.query_expansion_level_1 (vect, black_listed_terms)
+                if query_expansion_lvl=='level-2':
+                    self.query_expansion_level_2 (vect, black_listed_terms)
         elif method == 'BERT':
             ids = []
             documents = []

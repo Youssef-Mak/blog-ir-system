@@ -22,7 +22,7 @@ def parse_query_file():
     return queries
 
 
-def run_query(raw_query='', method='default', top=1000):
+def run_query(raw_query='', method='default', top=1000, query_expansion_lvl='none'):
     """
     Performs a single query.
     Returns an ordered mapping of results(doc_id, similarity)
@@ -34,10 +34,10 @@ def run_query(raw_query='', method='default', top=1000):
     """
     query = Query(raw_query)
     query.process_raw_query()
-    return query.perform_query(method=method, top=top)
+    return query.perform_query(method=method, top=top, query_expansion_lvl=query_expansion_lvl)
 
 
-def run_batch_query(queries=[], method='default'):
+def run_batch_query(queries=[], method='default', query_expansion_lvl='none'):
     """
     Performs a list of queries, results are saved in ./Results.txt. 
     Returns void
@@ -52,7 +52,7 @@ def run_batch_query(queries=[], method='default'):
                         "rank", "score", "tag"]), file=file)
         for i in range(len(queries)):
             raw_query = queries[i]
-            results = run_query(raw_query, method=method)
+            results = run_query(raw_query, method=method, query_expansion_lvl=query_expansion_lvl)
             rank = 1
             for id, sim in results.items():
                 print(" ".join([str(i + 1), "Q0", str(id),
@@ -68,9 +68,13 @@ def main():
         '-F', '--file', help='Run queries defined in ../data/topics_MB1-49.txt', action='store_true', required=False)
     parser.add_argument(
         '-M', '--method', help='Neural Method for Retrieval', default='default', choices={'default', 'BERT'}, required=False)
+    parser.add_argument(
+        '-QE', '--queryexpansion', help='Level of query expansion', default='none', choices={'none', 'level-1', 'level-2'}, required=False)
+
     args = parser.parse_args()
     if args.query:
-        results = run_query(args.query, method=args.method, top=10)
+        print (args.queryexpansion)
+        results = run_query(args.query, method=args.method, top=10, query_expansion_lvl=args.queryexpansion)
         print("\nTOP TEN RESULTS\n")
         for id, sim in results.items():
             print("ID: " + str(id) + "\n")
@@ -79,7 +83,7 @@ def main():
             print("Similarity: " + str(sim) + "\n\n")
     elif args.file:
         queries = parse_query_file()
-        run_batch_query(queries, args.method)
+        run_batch_query(queries, args.method, args.queryexpansion)
 
 
 if __name__ == "__main__":
