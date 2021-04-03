@@ -4,9 +4,17 @@
 Information Retrieval (IR) system based for a collection of documents (Twitter messages)
 
 ## Setup 
-Install the requirements (NOTE: if this step doesn't work, simply install [anaconda](https://docs.anaconda.com/anaconda/install/))
+Install [anaconda](https://docs.anaconda.com/anaconda/install/)).
+
+Install the requirements 
 ```
-pip install -r requirements.txt
+pip install -r requirements.txt && init.sh
+```
+
+Fetch the Pre-trained Vector Model
+
+```
+sh init.sh
 ```
 
 ## Preprocessing
